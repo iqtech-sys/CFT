@@ -19,7 +19,7 @@ class AccountsController extends Controller {
       ..onNext = _onData
       ..onError = _onError;
 
-    _presenter.getAccountTypes();
+    _presenter.getAccountTypes();//
   }
 
   void _onData(List<AccountType> list) {
