@@ -8,13 +8,20 @@ class DataAccountTypeRepository implements AccountTypeRepository {
   Future<List<AccountType>> getAccountTypes() async {
     await Future.delayed(const Duration(milliseconds: 400)); // محاكاة زمن شبكة
     if (_accountTypes.isEmpty) {
-_accountTypes.addAll([
-  const AccountType(id: 'USD', name: 'US Dollar'),
-  const AccountType(id: 'EUR', name: 'Euro'),
-  const AccountType(id: 'GBP', name: 'British Pound'),
-]);
+      _accountTypes.addAll([
+        const AccountType(id: 'USD', name: 'US Dollar', currency: 'USD'),
+        const AccountType(id: 'EUR', name: 'Euro',       currency: 'EUR'),
+        const AccountType(id: 'GBP', name: 'British Pound', currency: 'GBP'),
+      ]);
 
     }
     return _accountTypes;
+  }
+
+    @override
+  Future<String> addAccount(AccountType params) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _accountTypes.add(params);
+    return params.id;
   }
 }

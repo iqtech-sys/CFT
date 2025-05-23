@@ -13,6 +13,7 @@ class DataAccountRepository implements PaymentAccountRepository {
           id: '1',
           name: 'Payment USD',
           currency: 'USD',
+          isActive: true,
           balance: 10.0,
         ),
         PaymentAccount(
@@ -20,30 +21,33 @@ class DataAccountRepository implements PaymentAccountRepository {
           name: 'Payment EUR',
           currency: 'EUR',
           balance: 36.50,
+          isActive: true,
         ),
         PaymentAccount(
           id: '3',
           name: 'Expense GBP',
           currency: 'GBP',
+          isActive: false,
           balance: 47.30,
         ),
         PaymentAccount(
           id: '1',
           name: 'Payment USD',
           currency: 'USD',
-          balance: 28.0,
+          isActive: false,
+          balance: -28.0,
         ),
         PaymentAccount(
           id: '5',
           name: 'Payment EUR',
           currency: 'EUR',
-          balance: 15.0,
+          balance: -15.0,isActive: false,
         ),
         PaymentAccount(
           id: '6',
           name: 'Expense GBP',
-          currency: 'GBP',
-          balance: 50.0,
+          currency: 'GBP',isActive: false,
+          balance: 0.0,
         ),
       ]);
     }

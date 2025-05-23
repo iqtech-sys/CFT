@@ -13,48 +13,90 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: currentIndex,
-      onTap: onItemTapped,
-      selectedItemColor: Theme.of(context).primaryColor,
-      items: [
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            'assets/icons/footer_home.svg',
-            width: 24, height: 24,
+    final primary = Theme.of(context).primaryColor;
+    const inactiveColor = Colors.grey;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
           ),
-          label: 'Home',
         ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            'assets/icons/footer_accounts.svg',
-            width: 24, height: 24,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            offset: Offset(0, -1),
+            blurRadius: 4,
           ),
-          label: 'Accounts',
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            'assets/icons/footer_invoices.svg',
-            width: 24, height: 24,
+        ],
+      ),
+      child: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        currentIndex: currentIndex,
+        onTap: onItemTapped,
+        selectedItemColor: primary,
+        unselectedItemColor: inactiveColor,
+        showUnselectedLabels: true,
+        items: [
+          _buildItem(
+            iconPath: 'assets/icons/footer_home.svg',
+            label: 'Home',
+            index: 0,
+            activeColor: primary,
+            inactiveColor: inactiveColor,
           ),
-          label: 'Invoices',
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            'assets/icons/footer_budgets.svg',
-            width: 24, height: 24,
+          _buildItem(
+            iconPath: 'assets/icons/footer_accounts.svg',
+            label: 'Accounts',
+            index: 1,
+            activeColor: primary,
+            inactiveColor: inactiveColor,
           ),
-          label: 'Allocations',
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            'assets/icons/footer_more.svg',
-            width: 24, height: 24,
+          _buildItem(
+            iconPath: 'assets/icons/footer_invoices.svg',
+            label: 'Invoices',
+            index: 2,
+            activeColor: primary,
+            inactiveColor: inactiveColor,
           ),
-          label: 'More',
-        ),
-      ],
+          _buildItem(
+            iconPath: 'assets/icons/footer_budgets.svg',
+            label: 'Allocations',
+            index: 3,
+            activeColor: primary,
+            inactiveColor: inactiveColor,
+          ),
+          _buildItem(
+            iconPath: 'assets/icons/footer_more.svg',
+            label: 'More',
+            index: 4,
+            activeColor: primary,
+            inactiveColor: inactiveColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  BottomNavigationBarItem _buildItem({
+    required String iconPath,
+    required String label,
+    required int index,
+    required Color activeColor,
+    required Color inactiveColor,
+  }) {
+    return BottomNavigationBarItem(
+      icon: SvgPicture.asset(
+        iconPath,
+        width: 24,
+        height: 24,
+        color: currentIndex == index ? activeColor : inactiveColor,
+      ),
+      label: label,
     );
   }
 }

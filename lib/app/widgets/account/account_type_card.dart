@@ -1,12 +1,18 @@
+import 'package:cftracker_app/app/widgets/account/filter_bottom_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cftracker_app/app/widgets/home/payment_account_card.dart';
 import 'package:cftracker_app/data/repositories/home/data_account_repo.dart';
 import 'package:cftracker_app/domain/entities/home/payment_account.dart';
 import 'package:cftracker_app/domain/entities/account/account_type.dart';
 
-class AccountTypeCard extends StatefulWidget {
-  final AccountType type;            // العملة أو نوع الحساب
 
-  const AccountTypeCard({super.key, required this.type});
+class AccountTypeCard extends StatefulWidget {
+  final AccountType type;
+  final String searchTerm;
+  final AccountFilter? filter;
+   final List<PaymentAccount> accounts;
+  const AccountTypeCard({super.key, required this.type,required this.filter,required this.searchTerm,required this.accounts,});
 
   @override
   State<AccountTypeCard> createState() => _AccountTypeCardState();
@@ -20,25 +26,24 @@ class _AccountTypeCardState extends State<AccountTypeCard>
 
   Future<void> _toggle() async {
     setState(() => _isExpanded = !_isExpanded);
-
-    // أول مرة نفتح فيها الكارد نحمِّل البيانات
     if (_isExpanded && _accounts == null) {
       setState(() => _isLoading = true);
       final repo = DataAccountRepository();
       final all = await repo.getPaymentAccounts();
-      _accounts =
-          all.where((acc) => acc.currency == widget.type.id).toList();
+      _accounts = all.where((acc) => acc.currency == widget.type.id).toList();
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Card container
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.grey.shade300),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
       ),
       child: InkWell(
         onTap: _toggle,
@@ -47,40 +52,56 @@ class _AccountTypeCardState extends State<AccountTypeCard>
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              // رأس الكارد
+              // Header row
               Row(
                 children: [
+                  // Tag icon
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(.1),
-                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.blue, // أزرق
+                      shape: BoxShape.circle, // دائرة
                     ),
-                    child: const Icon(Icons.account_balance_wallet,
-                        color: Colors.blueAccent, size: 20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: SvgPicture.asset(
+                        'assets/icons/acc_tag.svg',
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
+                  // Title
                   Expanded(
-                    child: Text(widget.type.name,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500)),
+                    child: Text(
+                      widget.type.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                  AnimatedRotation(
-                    turns: _isExpanded ? .5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.arrow_forward_ios, size: 18),
+                  // Arrow icon (right when closed, up when open)
+                  SvgPicture.asset(
+                    _isExpanded
+                        ? 'assets/icons/arrow-up.svg'
+                        : 'assets/icons/arrow-right.svg',
+                    width: 18,
+                    height: 18,
+                    color: Colors.grey.shade600,
                   ),
                 ],
               ),
 
-              // محتوى الكارد المتوسِّع
+              // Expanded content
               AnimatedCrossFade(
                 firstChild: const SizedBox.shrink(),
                 secondChild: _buildExpandedContent(),
-                crossFadeState: _isExpanded
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
+                crossFadeState:
+                    _isExpanded
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
                 duration: const Duration(milliseconds: 250),
               ),
             ],
@@ -99,12 +120,13 @@ class _AccountTypeCardState extends State<AccountTypeCard>
     }
 
     final data = _accounts ?? [];
-
     if (data.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Text('لا توجد حسابات لهذا النوع',
-            style: TextStyle(color: Colors.grey)),
+        child: Text(
+          'لا توجد حسابات لهذا النوع',
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
 
@@ -114,49 +136,7 @@ class _AccountTypeCardState extends State<AccountTypeCard>
       padding: const EdgeInsets.only(top: 16),
       itemCount: data.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, i) => _AccountRow(acc: data[i]),
-    );
-  }
-}
-
-// صف حساب منفصل لإعادة الاستخدام
-class _AccountRow extends StatelessWidget {
-  final PaymentAccount acc;
-  const _AccountRow({required this.acc});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Center(
-              child: Text(
-                acc.currency == 'USD' ? '\$' : acc.currency,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(acc.name, style: const TextStyle(fontSize: 14))),
-          Text('${acc.balance.toStringAsFixed(1)} ${acc.currency}',
-              style: const TextStyle(fontSize: 14, color: Colors.green)),
-        ],
-      ),
+      itemBuilder: (_, i) => PaymentAccountCard(account: data[i]),
     );
   }
 }

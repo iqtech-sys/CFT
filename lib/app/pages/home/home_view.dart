@@ -1,6 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:cftracker_app/app/widgets/home/skeleton_card.dart';
 import 'package:cftracker_app/app/widgets/home/accounts_section.dart';
+import 'package:cftracker_app/app/widgets/home/home_filter_bottom_sheet.dart';
+import 'package:cftracker_app/app/widgets/home/payment_account_card.dart';
 import 'package:cftracker_app/app/widgets/search_textbox.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_clean_architecture/flutter_clean_architecture.dart';
@@ -18,110 +21,107 @@ class HomeView extends CleanView {
 class _HomeViewState extends CleanViewState<HomeView, HomeController> {
   _HomeViewState() : super(HomeController());
 
-  @override
-  Widget get view {
-    return Scaffold(
-      key: globalKey,
-      appBar: const AppTopBar(),
-      body: ControlledWidgetBuilder<HomeController>(
-        builder: (context, controller) {
-          return Column(
-            children: [
+  
+@override
+Widget get view {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    key: globalKey,
+    appBar: const AppTopBar(),
+    body: ControlledWidgetBuilder<HomeController>(
+      builder: (context, controller) {
+        return Column(
+          children: [
+            // 1) Loader bar
+            SizedBox(
+              height: 3,
+              child: controller.isLoading
+                  ? const LinearProgressIndicator(minHeight: 3)
+                  : const SizedBox.shrink(),
+            ),
+
+            // 2) SearchBox أو سكيليتون مكانها
+            controller.isLoading
+                ?  SkeletonSearchBar():
               SearchBox(
                 hasFilter: controller.isFilterActive != null,
-                onFilterTap: () => _showFilterSheet(context, controller),
+                onFilterTap: () {
+                  // هنا نستدعي دالة إظهار الشيت
+                  showHomeFilterBottomSheet(
+                    context,
+                    current:
+                        controller.isFilterActive == true
+                            ? HomeFilterButton.active
+                            : controller.isFilterActive == false
+                            ? HomeFilterButton.inactive
+                            : null,
+                    onSelected: (filter) {
+                      // نحول HomeFilterButton? إلى bool?
+                      final bool? newValue =
+                          (filter == HomeFilterButton.active)
+                              ? true
+                              : (filter == HomeFilterButton.inactive)
+                              ? false
+                              : null;
+                      controller.setFilter(newValue);
+                    },
+                  );
+                },
+                onChanged: controller.setSearch,
               ),
 
-              const SizedBox(height: 4),
-              Expanded(child: SingleChildScrollView(child: AccountsSection(accounts: controller.accounts))),
-              TotalsSection(accounts: controller.accounts),
-              const SizedBox(height: 8),
-            ],
-          );
-        },
-      ),
-    );
-  }
+            const SizedBox(height: 4),
 
-  ButtonStyle filterButtonStyle({
-    required bool selected,
-    required Color color,
-    required Color selectedTextColor,
-    required double width ,
-    required double height ,
-  }) {
-    return ElevatedButton.styleFrom(
-      minimumSize: Size(width, height),
-      elevation: 0,
-      backgroundColor:
-          selected
-        ? color.withOpacity(0.1)
-        : const Color(0xffd1d5d6),
-      foregroundColor:
-          selected
-              ? color
-              : const Color(0xff707271),
-      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    );
-  }
-
-  void _showFilterSheet(BuildContext context, HomeController controller) {
-    double buttonWidth = MediaQuery.of(context).size.height*0.21;
-    double buttonHeight = MediaQuery.of(context).size.width*0.15;
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder:
-          (_) => Container(
-            height: MediaQuery.of(context).size.height * 0.2, // 25% من الشاشة
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // زر Active
-                  ElevatedButton(
-                    style: filterButtonStyle(
-                      selected: controller.isFilterActive == true,
-                      color: Colors.blue, // اللون الأساسي للـ Active
-                      selectedTextColor: Colors.blue,
-                      width: buttonWidth,
-                      height: buttonHeight,
-                    ),
-                    onPressed: () {
-                      final newValue =
-                          controller.isFilterActive == true ? null : true;
-                      controller.setFilter(newValue);
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Active'),
-                  ),
-                  const SizedBox(width: 16),
-                  // زر Inactive
-                  ElevatedButton(
-                    style: filterButtonStyle(
-                      selected: controller.isFilterActive == false,
-                      color: Colors.blue, // اللون الأساسي للـ Inactive
-                      selectedTextColor: Colors.blue,
-                      width: buttonWidth,
-                      height: buttonHeight,
-                    ),
-                    onPressed: () {
-                      final newValue =
-                          controller.isFilterActive == false ? null : false;
-                      controller.setFilter(newValue);
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Inactive'),
-                  ),
-                ],
+            // 3) محتوى البطاقات: سكيليتون أو بيانات أو رسالة “لا توجد بيانات”
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: () {
+                  if (controller.isLoading) {
+                    // اظهر 4 سكيليتون كارد
+                    return ListView.separated(
+                      // physics: const NeverScrollableScrollPhysics(),
+                      // shrinkWrap: true,
+                        physics:  BouncingScrollPhysics(),
+                      itemCount: 6,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, __) => const SkeletonCard(),
+                    );
+                  } else if (controller.accounts.isEmpty) {
+                    // انتهاء التحميل ولكن لا توجد بيانات
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Text('No payment accounts available'),
+                      ),
+                    );
+                  } else {
+                    // انتهاء التحميل ووجود بيانات
+                    return ListView.separated(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: controller.filteredAccounts.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) => PaymentAccountCard(
+                        account: controller.filteredAccounts[i],
+                      ),
+                    );
+                  }
+                }(),
               ),
             ),
-          ),
-    );
-  }
+
+            // 4) TotalsSection نعرضها فقط بعد انتهاء التحميل ووجود بيانات
+            if (!controller.isLoading && controller.accounts.isNotEmpty)
+              TotalsSection(accounts: controller.accounts),
+
+            const SizedBox(height: 8),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+
 }

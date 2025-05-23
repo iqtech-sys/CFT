@@ -9,10 +9,12 @@ class SearchBox extends StatelessWidget {
   final String hint;
   final VoidCallback? onFilterTap;
   final bool hasFilter;
+  final ValueChanged<String>? onChanged;
   const SearchBox({
     this.hint = 'Search',
     this.onFilterTap,
     this.hasFilter = false,
+    this.onChanged,
     Key? key,
   }) : super(key: key);
 
@@ -23,6 +25,7 @@ class SearchBox extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: TextField(
+        onChanged: onChanged,
         decoration: InputDecoration(
           isDense: true,
           contentPadding:
