@@ -5,16 +5,12 @@ import 'package:cftracker_app/data/repositories/home/data_account_repo.dart';
 import 'package:cftracker_app/domain/entities/home/payment_account.dart';
 import 'package:cftracker_app/domain/repositories/account/account_type_repository.dart';
 import 'package:cftracker_app/domain/repositories/home/payment_account_repository.dart';
-import 'package:cftracker_app/domain/usecase/account/add_account_usecase.dart';
 import 'package:cftracker_app/domain/usecase/account/get_account_types_usecase.dart';
 import 'package:flutter_clean_architecture/flutter_clean_architecture.dart';
 import 'package:cftracker_app/domain/entities/account/account_type.dart';
 
 class AccountsController extends Controller {
-  bool isAdding = false;
-  String? newAccountId;
-  Exception? addError;
-  String? _newAccountId;
+
 
 
     String _searchTerm = '';
@@ -63,16 +59,14 @@ class AccountsController extends Controller {
 
   List<PaymentAccount> accounts = [];
 
-  bool isLoading = false;
+    bool isLoading = false;
+    List<AccountType> types = [];
 
   final AccountsPresenter _presenter;
-  List<AccountType> types = [];
+
 
   AccountsController()
-    : _presenter = AccountsPresenter(
-        GetAccountTypesUseCase(DataAccountTypeRepository()),
-        AddAccountUseCase(DataAccountTypeRepository()),
-      ),
+    : _presenter = AccountsPresenter(GetAccountTypesUseCase(DataAccountTypeRepository())),
       _typeRepo = DataAccountTypeRepository(),
       _accRepo = DataAccountRepository();
 
@@ -113,49 +107,6 @@ class AccountsController extends Controller {
 
 
 
-  void _onData(List<AccountType> list) {
-    types = list;
-    isLoading = false;
-    refreshUI();
-  }
-
-  void _onError(dynamic e) {
-    print('Error: $e');
-    types = [];
-    isLoading = false;
-    refreshUI();
-  }
-
-  /* ───────────── عمليات الإضافة ───────────── */
-  void addAccount(String name, String typeId, String currency) {
-    isAdding = true;
-    addError = null;
-    refreshUI();
-
-    final params = AccountType(
-      id:
-          DateTime.now().millisecondsSinceEpoch
-              .toString(), // أو اتركه فارغًا ويولده الـ repo
-      name: name,
-      currency: currency,
-    );
-    _presenter.addAccount(params);
-  }
-
-  void _onAddNext(String? id) => _newAccountId = id;
-
-  void _onAddComplete() {
-    // أعد جلب القائمة لتظهر البطاقة الجديدة
-    _presenter.getAccountTypes();
-    isAdding = false;
-    refreshUI();
-  }
-
-  void _onAddError(e) {
-    isAdding = false;
-    addError = e;
-    refreshUI();
-  }
 
   @override
   void onDisposed() {

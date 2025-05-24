@@ -1,4 +1,4 @@
-import 'package:cftracker_app/app/pages/accounts/add_account_view.dart';
+import 'package:cftracker_app/app/pages/add_account/add_account_view.dart';
 import 'package:cftracker_app/app/widgets/account/Shimmer.dart';
 import 'package:cftracker_app/app/widgets/account/account_type_card.dart';
 import 'package:cftracker_app/app/widgets/account/filter_bottom_sheet.dart';
@@ -33,7 +33,7 @@ class _AccountsViewState
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => AddAccountView(controller: controller),
+              builder: (_) => AddAccountView(),
             ),
           );
         },

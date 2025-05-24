@@ -1,6 +1,4 @@
-// lib/app/pages/accounts/add_account_view.dart
-
-import 'package:cftracker_app/app/pages/accounts/accounts_controller.dart';
+import 'package:cftracker_app/app/pages/add_account/add_account_controller.dart';
 import 'package:cftracker_app/domain/entities/account/account_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_clean_architecture/flutter_clean_architecture.dart';
@@ -8,16 +6,18 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 /// 2) نجعلها CleanView مربوطة بالكونترولر
 class AddAccountView extends CleanView {
-  final AccountsController controller;
 
-  const AddAccountView({Key? key, required this.controller}) : super(key: key);
+  const AddAccountView({Key? key}) : super(key: key);
 
   @override
-  AddAccountViewState createState() => AddAccountViewState(controller);
+  _AddAccountViewState createState() => _AddAccountViewState();
 }
-class AddAccountViewState
-    extends CleanViewState<AddAccountView, AccountsController> {
-  AddAccountViewState(AccountsController c) : super(c);
+class _AddAccountViewState extends CleanViewState<AddAccountView, AddAccountController> {
+
+  late AddAccountController con;
+
+
+  _AddAccountViewState() : super(AddAccountController());
 
   final _formKey = GlobalKey<FormState>();
   String? _accountName;
@@ -43,8 +43,9 @@ class AddAccountViewState
           fontWeight: FontWeight.w600,
         ),
       ),
-      body: ControlledWidgetBuilder<AccountsController>(
+      body: ControlledWidgetBuilder<AddAccountController>(
         builder: (context, controller) {
+          this.con = controller;
           OutlineInputBorder _border(Color color) => OutlineInputBorder(
                 borderSide: BorderSide(color: color),
                 borderRadius: BorderRadius.circular(4),

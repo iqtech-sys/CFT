@@ -4,6 +4,7 @@ import 'package:cftracker_app/domain/repositories/account/account_type_repositor
 import 'package:flutter_clean_architecture/flutter_clean_architecture.dart';
 
 class GetAccountTypesUseCase extends UseCase<List<AccountType>, void> {
+
   final AccountTypeRepository _repository;
   GetAccountTypesUseCase(this._repository);
 
@@ -20,3 +21,4 @@ class GetAccountTypesUseCase extends UseCase<List<AccountType>, void> {
     return controller.stream;
   }
 }
+
