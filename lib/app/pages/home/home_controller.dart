@@ -59,6 +59,23 @@ class HomeController extends Controller {
     _presenter.getAccounts();
   }
 
+  
+void topUp({
+  required String receiveId,
+  required String incomeId,
+  required double amount,
+}) {
+  accounts = accounts.map((a) {
+    if (a.id == incomeId)      return a.copyWith(balance: a.balance - amount);
+    if (a.id == receiveId)     return a.copyWith(balance: a.balance + amount);
+    return a;
+  }).toList();
+
+  refreshUI();
+}
+
+
+
   void _onAccountsRetrieved(List<PaymentAccount> list) {
     accounts = list;
     isLoading = false;

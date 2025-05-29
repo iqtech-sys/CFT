@@ -1,13 +1,15 @@
+
 class AccountType {
-  final String id;
-  final String name;
+  final String id;        // PAY | INC | DEP
+  final String name;      // Payment | Income | Deposit
   final String currency;
 
   const AccountType({
     required this.id,
     required this.name,
-    required this.currency,
+    this.currency = '',
   });
+
 
   AccountType copyWith({String? id, String? name, String? currency}) {
     return AccountType(

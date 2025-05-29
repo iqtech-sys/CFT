@@ -1,10 +1,20 @@
+import 'package:cftracker_app/app/pages/account_transactions/account_transactions_page.dart';
+import 'package:cftracker_app/app/pages/edit_account/edit_account_view.dart';
+import 'package:cftracker_app/app/widgets/home/TopUpDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cftracker_app/domain/entities/home/payment_account.dart';
 
 class PaymentAccountCard extends StatelessWidget {
   final PaymentAccount account;
-  const PaymentAccountCard({required this.account, Key? key}) : super(key: key);
+  final List<PaymentAccount> incomeAccounts;
+  final void Function(PaymentAccount acc, double amt) onTopUp;
+  const PaymentAccountCard({
+    required this.account,
+    Key? key,
+    required this.incomeAccounts,
+    required this.onTopUp,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -53,14 +63,49 @@ class PaymentAccountCard extends StatelessWidget {
               backgroundColor: Colors.blue,
               iconColor: Colors.white,
               size: 36,
-              onTap: () {},
+              onTap: () async {
+                final result = await showDialog<Map<String, dynamic>>(
+                  context: context,
+                  builder:
+                      (_) => TopUpDialog(
+                        receiveAccount: account,
+                        incomeAccounts: incomeAccounts,
+                      ),
+                );
+
+                if (result != null) {
+                  final inc = result['income'] as PaymentAccount;
+                  final amt = result['amount'] as double;
+                  onTopUp(inc, amt);
+                }
+              },
             ),
 
-            _SvgActionButton('assets/icons/edit.svg', size: 36, onTap: () {}),
+            _SvgActionButton(
+              'assets/icons/edit.svg',
+              size: 36,
+              onTap: () async {
+                final updated = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => EditAccountView(account: account),
+                  ),
+                );
+              },
+            ),
             _SvgActionButton(
               'assets/icons/transactions.svg',
               size: 36,
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder:
+                        (_) => AccountTransactionsPage(
+                          account: account,
+                          transactions: [],
+                        ),
+                  ),
+                );
+              },
             ),
           ],
         ),

@@ -5,12 +5,12 @@ import 'package:cftracker_app/domain/repositories/account/account_type_repositor
 import 'package:flutter_clean_architecture/flutter_clean_architecture.dart';
 
 
-class AddAccountUseCase
+class EditAccountUseCase
     extends UseCase<String?, AccountType?> {
 
   final AccountTypeRepository _repo;
 
-  AddAccountUseCase(this._repo);
+  EditAccountUseCase(this._repo);
 
   @override
   Future<Stream<String?>> buildUseCaseStream(AccountType? params) async {

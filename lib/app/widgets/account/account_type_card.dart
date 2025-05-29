@@ -6,13 +6,27 @@ import 'package:cftracker_app/data/repositories/home/data_account_repo.dart';
 import 'package:cftracker_app/domain/entities/home/payment_account.dart';
 import 'package:cftracker_app/domain/entities/account/account_type.dart';
 
-
 class AccountTypeCard extends StatefulWidget {
   final AccountType type;
   final String searchTerm;
   final AccountFilter? filter;
-   final List<PaymentAccount> accounts;
-  const AccountTypeCard({super.key, required this.type,required this.filter,required this.searchTerm,required this.accounts,});
+  final List<PaymentAccount> accounts;
+  final List<PaymentAccount> incomeAccounts;
+  final void Function(
+    PaymentAccount receiveAcc,
+    PaymentAccount incomeAcc,
+    double amount,
+  )
+  onTopUp;
+  const AccountTypeCard({
+    Key? key,
+    required this.type,
+    required this.filter,
+    required this.searchTerm,
+    required this.accounts,
+    required this.incomeAccounts,
+    required this.onTopUp,
+  }) : super(key: key);
 
   @override
   State<AccountTypeCard> createState() => _AccountTypeCardState();
@@ -96,13 +110,13 @@ class _AccountTypeCardState extends State<AccountTypeCard>
 
               // Expanded content
               AnimatedCrossFade(
-                firstChild: const SizedBox.shrink(),
+                duration: Duration(milliseconds: 250),
+                firstChild: SizedBox.shrink(),
                 secondChild: _buildExpandedContent(),
                 crossFadeState:
                     _isExpanded
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                duration: const Duration(milliseconds: 250),
               ),
             ],
           ),
@@ -112,14 +126,8 @@ class _AccountTypeCardState extends State<AccountTypeCard>
   }
 
   Widget _buildExpandedContent() {
-    if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
+    final data = widget.accounts;
 
-    final data = _accounts ?? [];
     if (data.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
@@ -131,12 +139,22 @@ class _AccountTypeCardState extends State<AccountTypeCard>
     }
 
     return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
       padding: const EdgeInsets.only(top: 16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: data.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, i) => PaymentAccountCard(account: data[i]),
+      itemBuilder: (_, i) {
+        final recvAcc = data[i];
+        return PaymentAccountCard(
+          account: recvAcc,
+          incomeAccounts: widget.incomeAccounts,
+          onTopUp: (incAcc, amt) {
+            // ✔️
+            widget.onTopUp(recvAcc, incAcc, amt);
+          },
+        );
+      },
     );
   }
 }

@@ -1,111 +1,137 @@
+import 'dart:convert';
+
 import 'package:cftracker_app/app/pages/add_account/add_account_presenter.dart';
 import 'package:cftracker_app/data/repositories/account/data_account_type_repo.dart';
 import 'package:cftracker_app/data/repositories/home/data_account_repo.dart';
 import 'package:cftracker_app/domain/entities/account/account_type.dart';
+import 'package:cftracker_app/domain/entities/add_account/currency.dart';
 import 'package:cftracker_app/domain/entities/home/payment_account.dart';
 import 'package:cftracker_app/domain/repositories/account/account_type_repository.dart';
 import 'package:cftracker_app/domain/repositories/home/payment_account_repository.dart';
 import 'package:cftracker_app/domain/usecase/account/add_account_usecase.dart';
 import 'package:cftracker_app/domain/usecase/account/get_account_types_usecase.dart';
+import 'package:flutter/services.dart' show rootBundle;          // <-- جديد
 import 'package:flutter_clean_architecture/flutter_clean_architecture.dart';
+import 'package:flutter/material.dart';
 
 class AddAccountController extends Controller {
+  /* ─────────── بيانات الحالة ─────────── */
+  List<AccountType>      types      = [];
+  List<PaymentAccount>   accounts   = [];
+  List<Currency>         currencies = [];
 
-  // final AccountTypeRepository _typeRepo;
-  // final PaymentAccountRepository _accRepo;
-
-  List<PaymentAccount> accounts = [];
-  bool isAdding = false;
+  bool       isLoading  = true;     // تحميل الأنواع + العملات
+  bool       isAdding   = false;    // أثناء إضافة حساب
   Exception? addError;
+  String?    newAccountId;
 
-  String? newAccountId;
+  /* ─────────── Repos & Presenter ─────────── */
+  final AccountTypeRepository      _typeRepo;
+  final PaymentAccountRepository   _accRepo;
+  final AddAccountPresenter        _presenter;
 
-  String? _newAccountId;
+  AddAccountController()
+      : _typeRepo   = DataAccountTypeRepository(),
+        _accRepo    = DataAccountRepository(),
+        _presenter  = AddAccountPresenter(
+                        AddAccountUseCase(DataAccountTypeRepository()),
+                        GetAccountTypesUseCase(DataAccountTypeRepository()),
+                      ) {
+    _presenter
+      ..onAddNext     = _onAddNext
+      ..onAddError    = _onAddError
+      ..onAddComplete = _onAddComplete
+      ..onNext        = _onData
+      ..onError       = _onError;
+  }
 
-  bool isLoading = false;
-  List<AccountType> types = [];
+  /* ─────────── دورة الحياة ─────────── */
+  @override
+  void initListeners() {
+    _loadEverything();   // تجميع كل المطلوب
+  }
 
-  final AddAccountPresenter _presenter;
+  Future<void> _loadEverything() async {
+    isLoading = true;
+    refreshUI();
 
-  final AccountTypeRepository _typeRepo;
-  final PaymentAccountRepository _accRepo;
+    try {
+      // 1) أنواع الحسابات
+      types    = await _typeRepo.getAccountTypes();
 
-  AddAccountController() : _presenter = AddAccountPresenter(AddAccountUseCase(DataAccountTypeRepository()),
-                                                            GetAccountTypesUseCase(DataAccountTypeRepository())),
-                                                            _typeRepo = DataAccountTypeRepository(),
-                                                            _accRepo = DataAccountRepository();
+      // 2) الحسابات الموجودة
+      accounts = await _accRepo.getPaymentAccounts();
 
+      // 3) ملف العملات من الـ assets
+      await _loadCurrenciesFromAsset();
+    } catch (e) {
+      _onError(e);
+    }
 
-  /* ───────────── عمليات الإضافة ───────────── */
+    isLoading = false;
+    refreshUI();
+  }
+
+  Future<void> _loadCurrenciesFromAsset() async {
+    try {
+      final jsonStr = await rootBundle.loadString('assets/currencies.json');
+      final data    = json.decode(jsonStr) as Map<String, dynamic>;
+      final list    = data['Currencies'] as List<dynamic>;
+
+      currencies = list
+          .map((m) => Currency.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      // في حال وجود خطأ في الملف سنترك القائمة فارغة
+      currencies = [];
+    }
+  }
+
+  /* ─────────── إضافة حساب جديد ─────────── */
   void addAccount(String name, String typeId, String currency) {
     isAdding = true;
-    addError = null;
     refreshUI();
 
     final params = AccountType(
-      id:
-      DateTime.now().millisecondsSinceEpoch
-          .toString(), // أو اتركه فارغًا ويولده الـ repo
+      id:  DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      currency: currency,
+      currency: currency,          // الرمز المختار (مثل AED)
     );
+
     _presenter.addAccount(params);
   }
 
-  /* ───────────── عمليات الإضافة ───────────── */
-  void _onAddNext(String? id) => _newAccountId = id;
-
-  void _onAddComplete() {
-    // أعد جلب القائمة لتظهر البطاقة الجديدة
-    _presenter.getAccountTypes();
-    isAdding = false;
-    refreshUI();
-  }
-
-
-
-
+  /* ─────────── Callbacks من الـ Presenter ─────────── */
   void _onData(List<AccountType> list) {
+    // يُستعمل فقط لو أردت جلب الأنواع عبر الـ UseCase
     types = list;
-    isLoading = false;
     refreshUI();
   }
 
   void _onError(dynamic e) {
-    print('Error: $e');
     types = [];
-    isLoading = false;
+    addError = e is Exception ? e : Exception(e.toString());
     refreshUI();
+  }
+
+  /* إضافة */
+  void _onAddNext(String? id) => newAccountId = id;
+
+  void _onAddComplete() {
+    isAdding = false;
+    refreshUI();
+    Navigator.pop(getContext(), true);   // رجوع للصفحة السابقة مع success
   }
 
   void _onAddError(e) {
     isAdding = false;
-    addError = e;
+    addError = e is Exception ? e : Exception(e.toString());
     refreshUI();
   }
 
   @override
-  void initListeners() {
-    isLoading = true;
-    refreshUI();
-
-    // أولا: جلب أنواع الحسابات
-    _typeRepo
-        .getAccountTypes()
-        .then((tList) {
-      types = tList;
-      // ثانياً: جلب الحسابات
-      return _accRepo.getPaymentAccounts();
-    })
-        .then((aList) {
-      accounts = aList;
-      isLoading = false;
-      refreshUI();
-    })
-        .catchError((e) {
-      isLoading = false;
-      refreshUI();
-    });
+  void onDisposed() {
+    _presenter.dispose();
+    super.onDisposed();
   }
-
 }

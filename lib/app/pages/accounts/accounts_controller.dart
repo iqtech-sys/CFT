@@ -99,6 +99,23 @@ class AccountsController extends Controller {
     refreshUI();
   }
 
+  
+  /// خصم مبلغ من حساب Income وإضافته إلى حساب الاستقبال
+  void topUp({
+    required String receiveId,
+    required String incomeId,
+    required double amount,
+  }) {
+    // أنشئ قائمة جديدة مع تعديل الرصيد (لأن الحقول final)
+    accounts = accounts.map((acc) {
+      if (acc.id == incomeId)  return acc.copyWith(balance: acc.balance - amount);
+      if (acc.id == receiveId) return acc.copyWith(balance: acc.balance + amount);
+      return acc;
+    }).toList();
+
+    refreshUI();
+  }
+
   void setFilter(AccountFilter? newFilter) {
     _selectedFilter = newFilter;
     refreshUI();

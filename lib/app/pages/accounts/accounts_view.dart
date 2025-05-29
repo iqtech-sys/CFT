@@ -30,12 +30,13 @@ class _AccountsViewState
         backgroundColor: Colors.blue,
         shape: CircleBorder(),
         child: Icon(Icons.add, color: Colors.white, size: 32),
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => AddAccountView(),
-            ),
+        onPressed: () async {
+          final added = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(builder: (_) => const AddAccountView()),
           );
+          if (added == true) {
+            controller.initListeners(); // تحديث القائمة
+          }
         },
       ),
 
@@ -43,7 +44,7 @@ class _AccountsViewState
       key: globalKey,
       body: ControlledWidgetBuilder<AccountsController>(
         builder: (context, con) {
-          controller=con;
+          controller = con;
           if (con.isLoading) {
             return Column(
               children: [
@@ -77,13 +78,13 @@ class _AccountsViewState
                 onFilterTap: () {
                   showAccountFilterSheet(
                     context,
-                    current: con.selectedFilter, 
+                    current: con.selectedFilter,
                     onSelected: (newFilter) {
                       con.setFilter(newFilter);
                     },
                   );
                 },
-                 onChanged: con.setSearch, 
+                onChanged: con.setSearch,
               ),
               const SizedBox(height: 8),
               Expanded(
@@ -91,18 +92,31 @@ class _AccountsViewState
                   itemCount: con.types.length,
                   itemBuilder: (ctx, index) {
                     final type = con.types[index];
-      final accountsOfType = con.filteredAccounts
-          .where((acc) => acc.currency == type.id)
-          .toList();
-                if (accountsOfType.isEmpty) return const SizedBox.shrink();
-
+                    final accountsOfType =
+                        con.filteredAccounts
+                            .where((acc) => acc.typeId == type.id)
+                            .toList();
+                    if (accountsOfType.isEmpty) return const SizedBox.shrink();
+                    final incomeOnly =
+                        con.filteredAccounts
+                            .where(
+                              (acc) => acc.typeId == 'INC',
+                            ) // كل حسابات Income مرة واحدة
+                            .toList();
                     return AccountTypeCard(
                       accounts: accountsOfType,
                       type: type,
                       searchTerm: con.searchTerm,
                       filter: con.selectedFilter,
-
-                      ); 
+                      incomeAccounts: incomeOnly, // ★ جديد
+                      onTopUp: (receiveAcc, incomeAcc, amount) {
+                        con.topUp(
+                          receiveId: receiveAcc.id,
+                          incomeId: incomeAcc.id,
+                          amount: amount,
+                        );
+                      },
+                    );
                   },
                 ),
               ),
